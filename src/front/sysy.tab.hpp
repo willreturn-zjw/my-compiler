@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.5.1.  */
+/* A Bison parser, made by GNU Bison 3.8.2.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2020 Free Software Foundation,
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2021 Free Software Foundation,
    Inc.
 
    This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -31,8 +31,9 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-/* Undocumented macros, especially those whose name start with YY_,
-   are private implementation details.  Do not rely on them.  */
+/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+   especially those whose name start with YY_ or yy_.  They are
+   private implementation details that can be changed or removed.  */
 
 #ifndef YY_YY_SRC_FRONT_SYSY_TAB_HPP_INCLUDED
 # define YY_YY_SRC_FRONT_SYSY_TAB_HPP_INCLUDED
@@ -52,27 +53,32 @@ extern int yydebug;
   #include "../../include/front/variable.hpp"
   #include <cstring>
 
-#line 56 "src/front/sysy.tab.hpp"
+#line 57 "src/front/sysy.tab.hpp"
 
-/* Token type.  */
+/* Token kinds.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
   enum yytokentype
   {
-    INT = 258,
-    VOID = 259,
-    FLOAT = 260,
-    RETURN = 261,
-    CONST = 262,
-    IF = 263,
-    ELSE = 264,
-    WHILE = 265,
-    BREAK = 266,
-    CONTINUE = 267,
-    IDENT = 268,
-    INT_CONST = 269,
-    FLOAT_CONST = 270
+    YYEMPTY = -2,
+    YYEOF = 0,                     /* "end of file"  */
+    YYerror = 256,                 /* error  */
+    YYUNDEF = 257,                 /* "invalid token"  */
+    INT = 258,                     /* INT  */
+    VOID = 259,                    /* VOID  */
+    FLOAT = 260,                   /* FLOAT  */
+    RETURN = 261,                  /* RETURN  */
+    CONST = 262,                   /* CONST  */
+    IF = 263,                      /* IF  */
+    ELSE = 264,                    /* ELSE  */
+    WHILE = 265,                   /* WHILE  */
+    BREAK = 266,                   /* BREAK  */
+    CONTINUE = 267,                /* CONTINUE  */
+    IDENT = 268,                   /* IDENT  */
+    INT_CONST = 269,               /* INT_CONST  */
+    FLOAT_CONST = 270              /* FLOAT_CONST  */
   };
+  typedef enum yytokentype yytoken_kind_t;
 #endif
 
 /* Value type.  */
@@ -88,7 +94,7 @@ union YYSTYPE
   Btype btype_val;
   BaseAST *ast_val;
 
-#line 92 "src/front/sysy.tab.hpp"
+#line 98 "src/front/sysy.tab.hpp"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -99,6 +105,8 @@ typedef union YYSTYPE YYSTYPE;
 
 extern YYSTYPE yylval;
 
+
 int yyparse (std::unique_ptr<BaseAST> &ast);
+
 
 #endif /* !YY_YY_SRC_FRONT_SYSY_TAB_HPP_INCLUDED  */
