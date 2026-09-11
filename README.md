@@ -158,7 +158,7 @@ py tests/run_tests.py --compiler .\test\compiler.exe
 python tests/run_tests.py --compiler test/compiler --case 16 --case 30 --keep-artifacts
 ```
 
-启用 `--keep-artifacts` 后，每条用例的 `parse.kp`、`output.s` 和编译器诊断信息会保存在 `test-results/artifacts/TCxx/`。如果找不到编译器，所有用例会标记为 `BLOCKED` 并给出原因；只有静态断言不满足或编译器异常退出时才标记为 `FAIL`。脚本退出码为：全部通过或阻塞时为 `0`，存在失败用例时为 `1`。
+启用 `--keep-artifacts` 后，每条用例的 `parse.kp`、`output.s` 和编译器诊断信息会保存在 `test-results/artifacts/TCxx/`。脚本会在启动时把 `--compiler` 的相对路径解析为绝对路径，再进入各用例的临时目录运行，因而 `--compiler test/compiler` 不会被错误地当作临时目录下的文件。如果找不到编译器，或编译器文件与当前平台不兼容（例如在 Windows 上运行 Linux ELF 文件），所有用例会标记为 `BLOCKED` 并给出原因；只有静态断言不满足或编译器异常退出时才标记为 `FAIL`。脚本退出码为：全部通过或阻塞时为 `0`，存在失败用例时为 `1`。
 
 ## 目录结构
 
