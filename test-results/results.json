@@ -1,0 +1,302 @@
+[
+  {
+    "id": 1,
+    "title": "关键字、符号与分隔符识别",
+    "phase": "frontend",
+    "criticality": "高",
+    "status": "PASS",
+    "duration_ms": 20,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 2,
+    "title": "注释与空白处理",
+    "phase": "frontend",
+    "criticality": "高",
+    "status": "PASS",
+    "duration_ms": 1,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 3,
+    "title": "全局变量、声明与函数定义解析",
+    "phase": "frontend",
+    "criticality": "高",
+    "status": "PASS",
+    "duration_ms": 1,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 4,
+    "title": "整数运算优先级与常量折叠",
+    "phase": "frontend",
+    "criticality": "高",
+    "status": "PASS",
+    "duration_ms": 1,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 5,
+    "title": "整数与浮点字面量",
+    "phase": "frontend",
+    "criticality": "高",
+    "status": "FAIL",
+    "duration_ms": 1,
+    "details": "缺少: ret 0",
+    "artifacts": ""
+  },
+  {
+    "id": 6,
+    "title": "常量、局部作用域与遮蔽",
+    "phase": "frontend",
+    "criticality": "高",
+    "status": "FAIL",
+    "duration_ms": 1,
+    "details": "缺少: ret 15",
+    "artifacts": ""
+  },
+  {
+    "id": 7,
+    "title": "非 void 函数定义与调用",
+    "phase": "frontend",
+    "criticality": "高",
+    "status": "PASS",
+    "duration_ms": 1,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 8,
+    "title": "if/else 控制流生成",
+    "phase": "frontend",
+    "criticality": "高",
+    "status": "PASS",
+    "duration_ms": 1,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 9,
+    "title": "整数与浮点边界字面量",
+    "phase": "frontend",
+    "criticality": "高",
+    "status": "PASS",
+    "duration_ms": 1,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 10,
+    "title": "长度为 1 的数组类型",
+    "phase": "frontend",
+    "criticality": "中",
+    "status": "PASS",
+    "duration_ms": 1,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 11,
+    "title": "1x1 多维数组和下标 0",
+    "phase": "frontend",
+    "criticality": "高",
+    "status": "PASS",
+    "duration_ms": 1,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 12,
+    "title": "多维数组部分初始化与补零",
+    "phase": "frontend",
+    "criticality": "高",
+    "status": "PASS",
+    "duration_ms": 1,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 13,
+    "title": "Koopa 指令链构造",
+    "phase": "frontend",
+    "criticality": "高",
+    "status": "PASS",
+    "duration_ms": 1,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 14,
+    "title": "while、continue、break 的 CFG",
+    "phase": "frontend",
+    "criticality": "高",
+    "status": "PASS",
+    "duration_ms": 1,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 15,
+    "title": "数组形参与 getptr/getelemptr",
+    "phase": "frontend",
+    "criticality": "高",
+    "status": "PASS",
+    "duration_ms": 2,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 16,
+    "title": "整数常量返回",
+    "phase": "backend",
+    "criticality": "高",
+    "status": "PASS",
+    "duration_ms": 1,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 17,
+    "title": "负数及 32 位边界常量",
+    "phase": "backend",
+    "criticality": "高",
+    "status": "PASS",
+    "duration_ms": 1,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 18,
+    "title": "整数基本算术运算",
+    "phase": "backend",
+    "criticality": "高",
+    "status": "FAIL",
+    "duration_ms": 1,
+    "details": "缺少: sdiv",
+    "artifacts": ""
+  },
+  {
+    "id": 19,
+    "title": "有符号除法与取模",
+    "phase": "backend",
+    "criticality": "高",
+    "status": "PASS",
+    "duration_ms": 2,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 20,
+    "title": "整数比较运算",
+    "phase": "backend",
+    "criticality": "高",
+    "status": "PASS",
+    "duration_ms": 2,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 21,
+    "title": "浮点算术与比较",
+    "phase": "backend",
+    "criticality": "高",
+    "status": "PASS",
+    "duration_ms": 2,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 22,
+    "title": "局部变量分配与读写",
+    "phase": "backend",
+    "criticality": "高",
+    "status": "PASS",
+    "duration_ms": 1,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 23,
+    "title": "全局变量与全局数组",
+    "phase": "backend",
+    "criticality": "高",
+    "status": "PASS",
+    "duration_ms": 1,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 24,
+    "title": "一维数组边界地址计算",
+    "phase": "backend",
+    "criticality": "高",
+    "status": "PASS",
+    "duration_ms": 1,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 25,
+    "title": "多维数组地址计算",
+    "phase": "backend",
+    "criticality": "高",
+    "status": "PASS",
+    "duration_ms": 1,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 26,
+    "title": "条件分支真假路径",
+    "phase": "backend",
+    "criticality": "高",
+    "status": "PASS",
+    "duration_ms": 1,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 27,
+    "title": "循环回边与退出控制流",
+    "phase": "backend",
+    "criticality": "高",
+    "status": "PASS",
+    "duration_ms": 1,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 28,
+    "title": "整数参数传递边界",
+    "phase": "backend",
+    "criticality": "高",
+    "status": "PASS",
+    "duration_ms": 1,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 29,
+    "title": "浮点及混合参数传递",
+    "phase": "backend",
+    "criticality": "高",
+    "status": "PASS",
+    "duration_ms": 2,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 30,
+    "title": "高寄存器压力与 spill/reload",
+    "phase": "backend",
+    "criticality": "高",
+    "status": "PASS",
+    "duration_ms": 2,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  }
+]
