@@ -122,7 +122,9 @@ test/compiler -S <input.sy> -o <output.s>
 
 ## 全流程自动化测试
 
-测试清单 `测试用例清单.xlsx` 共包含 30 条用例：TC01–TC15 覆盖前端和 Koopa IR/分析链路，TC16–TC30 覆盖 Koopa IR 到 ARMv8 汇编链路。自动化脚本位于 `tests/run_tests.py`，执行时不需要 Excel 或第三方 Python 包。
+测试依赖新增pytest>=7.0。
+
+测试清单 `测试用例清单.xlsx` 共包含 30 条用例：TC01–TC15 覆盖前端和 Koopa IR/分析链路，TC16–TC30 覆盖 Koopa IR 到 ARMv8 汇编链路。自动化测试采用 pytest，入口为 `tests/test_compiler.py`，用例数据和公共执行器位于 `tests/run_tests.py`。
 
 详细的测试范围、单条用例流程、状态判定和完成标准见 [`tests/TEST_PROCESS.md`](tests/TEST_PROCESS.md)。
 
@@ -134,16 +136,16 @@ test/compiler -S <input.sy> -o <output.s>
 4. 记录每条用例的 `PASS`、`FAIL` 或 `BLOCKED`，输出 JSON、CSV 和 Markdown 汇总；
 5. 不执行生成的汇编，不进行 AArch64 汇编、链接或运行，因此不要求本机具备 AArch64 环境。
 
-默认运行全部 30 条用例：
+默认运行全部 30 条用例（目标环境按 Linux/AArch64 处理）：
 
 ```bash
-python tests/run_tests.py --compiler test/compiler
+python -m pytest -q tests/test_compiler.py --compiler test/compiler
 ```
 
-如果编译器尚未构建，可先执行 `bash build.sh`，然后重新运行测试。也可以在 Windows 环境中显式指定可执行文件：
+如果编译器尚未构建，可先执行 `bash build.sh`，然后重新运行测试。应在 Linux/WSL/AArch64 环境中提供可运行的 ELF 编译器：
 
-```powershell
-py tests/run_tests.py --compiler .\test\compiler.exe
+```bash
+python -m pytest -q tests/test_compiler.py --compiler ./test/compiler
 ```
 
 报告默认写入 `test-results/`：
@@ -155,10 +157,18 @@ py tests/run_tests.py --compiler .\test\compiler.exe
 调试单条或多条用例：
 
 ```bash
-python tests/run_tests.py --compiler test/compiler --case 16 --case 30 --keep-artifacts
+python -m pytest -q tests/test_compiler.py --compiler ./test/compiler -k 'TC16 or TC30' --keep-artifacts
 ```
 
-启用 `--keep-artifacts` 后，每条用例的 `parse.kp`、`output.s` 和编译器诊断信息会保存在 `test-results/artifacts/TCxx/`。脚本会在启动时把 `--compiler` 的相对路径解析为绝对路径，再进入各用例的临时目录运行，因而 `--compiler test/compiler` 不会被错误地当作临时目录下的文件。如果找不到编译器，或编译器文件与当前平台不兼容（例如在 Windows 上运行 Linux ELF 文件），所有用例会标记为 `BLOCKED` 并给出原因；只有静态断言不满足或编译器异常退出时才标记为 `FAIL`。脚本退出码为：全部通过或阻塞时为 `0`，存在失败用例时为 `1`。
+启用 `--keep-artifacts` 后，每条用例的 `input.sy`、`parse.kp`、`output.s` 和诊断信息会保存在 `test-results/artifacts/TCxx/`。编译器是唯一外部依赖，测试不 Mock 编译器本身；缺少编译器、无法启动或目标架构不匹配时，pytest 将用例标记为 `SKIPPED`，并在汇总中记为 `BLOCKED`。编译器异常退出、输出缺失或静态断言不满足时才记为失败。测试只检查文本，不执行 ARMv8 汇编。
+
+### pytest 核心设计
+
+- 参数化/数据驱动：`CASES` 是 30 条结构化 `Case` 数据，`@pytest.mark.parametrize` 自动生成 TC01–TC30；测试逻辑只实现一次。
+- 测试数据组织：每条记录包含阶段、源代码、正向正则断言、禁止模式、重要级别和测试方法备注；新增用例无需复制测试函数。
+- 外部依赖处理：编译器路径通过 `--compiler` 注入并在启动临时目录前解析为绝对路径。不存在或无法启动时使用 pytest `skip` 表示环境阻塞，不伪造通过结果。
+- 隔离与并发安全：每条用例使用独立临时目录，隔离固定生成的 `parse.kp`；不执行汇编、链接或 AArch64 程序。
+- 结果汇总：pytest 会话结束时生成 `results.md`、`results.csv`、`results.json`，便于人工审阅和 CI 消费。
 
 ## 目录结构
 
@@ -175,7 +185,5 @@ src/                     源文件
   back/                  ARMv8 后端实现
 test/                    示例输入、参考 IR/汇编及编译器产物
 build.sh                 构建脚本
-tests/
-  run_tests.py           全自动测试 
-  TEST_PROCESS.md        规则
+tests/                   全自动测试
 ```
