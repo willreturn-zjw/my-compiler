@@ -226,12 +226,11 @@ def run_case(case: Case, compiler: Path | None, keep: Path | None) -> Result:
         return Result(case.id, case.title, case.phase, case.criticality, "FAIL",
                       int((time.perf_counter() - start) * 1000), "单条用例超过 20 秒")
     except OSError as exc:
-        # A stale/non-native artifact (for example a Linux ELF on Windows),
-        # or an ELF whose dynamic loader is unavailable, is an environment
-        # limitation rather than a compiler assertion failure.  In the latter
-        # case Linux reports ENOENT even though the compiler path exists.
-        if (getattr(exc, "winerror", None) == 193 or
-                getattr(exc, "errno", None) in (2, 8)):
+        # The target environment is Linux/AArch64.  ENOENT can mean that an
+        # existing ELF cannot find its interpreter or a shared library, while
+        # ENOEXEC indicates an architecture/format mismatch.  Both are
+        # environment blocks, not compiler assertion failures.
+        if getattr(exc, "errno", None) in (2, 8, 126) or getattr(exc, "winerror", None) == 193:
             status = "BLOCKED"
             if getattr(exc, "errno", None) == 2 and not compiler.exists():
                 detail = "找不到编译器文件；请使用 --compiler 指定正确路径"
@@ -239,7 +238,7 @@ def run_case(case: Case, compiler: Path | None, keep: Path | None) -> Result:
                 detail = ("编译器文件存在，但操作系统无法启动它（通常是 ELF 解释器/"
                           "动态库缺失或架构不匹配）；请检查运行时依赖")
             else:
-                detail = "编译器文件不是当前平台可执行格式；请提供可运行的 compiler/编译环境"
+                detail = "编译器文件不是目标 Linux 平台可执行格式；请提供 Linux/AArch64 编译环境"
         else:
             status = "FAIL"
             detail = repr(exc)

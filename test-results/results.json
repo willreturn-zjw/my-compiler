@@ -5,7 +5,7 @@
     "phase": "frontend",
     "criticality": "高",
     "status": "PASS",
-    "duration_ms": 20,
+    "duration_ms": 3,
     "details": "所有静态断言通过",
     "artifacts": ""
   },
@@ -65,7 +65,7 @@
     "phase": "frontend",
     "criticality": "高",
     "status": "PASS",
-    "duration_ms": 1,
+    "duration_ms": 2,
     "details": "所有静态断言通过",
     "artifacts": ""
   },
@@ -185,7 +185,7 @@
     "phase": "backend",
     "criticality": "高",
     "status": "PASS",
-    "duration_ms": 2,
+    "duration_ms": 1,
     "details": "所有静态断言通过",
     "artifacts": ""
   },
@@ -215,7 +215,7 @@
     "phase": "backend",
     "criticality": "高",
     "status": "PASS",
-    "duration_ms": 1,
+    "duration_ms": 2,
     "details": "所有静态断言通过",
     "artifacts": ""
   },
@@ -285,7 +285,7 @@
     "phase": "backend",
     "criticality": "高",
     "status": "PASS",
-    "duration_ms": 2,
+    "duration_ms": 1,
     "details": "所有静态断言通过",
     "artifacts": ""
   },
@@ -295,7 +295,7 @@
     "phase": "backend",
     "criticality": "高",
     "status": "PASS",
-    "duration_ms": 2,
+    "duration_ms": 1,
     "details": "所有静态断言通过",
     "artifacts": ""
   }
