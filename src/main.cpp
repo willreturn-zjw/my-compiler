@@ -82,7 +82,6 @@ int main(int argc, const char *argv[]) {
   assert(!ret);
   //sysy库的函数声明
   funcm.printSysyDeclFunc();
-  //体
   ast->dump();
 
   std::cout.rdbuf(coutBuf); 
