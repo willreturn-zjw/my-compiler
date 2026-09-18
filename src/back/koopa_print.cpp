@@ -475,10 +475,17 @@ void fcmp_set_print(std::string r0,std::string r1,float imm,std::string r2,bool 
     }
     else 
     {
-        // Integer CMP compares IEEE-754 bit patterns, not floating-point
-        // values.  FCMP sets the floating-point condition flags required by
-        // the conditional moves below.
-        std::cout << std::setw(cout_len) << "fcmp " << r1 << ", " << r2 << std::endl;
+        std::string x1=reg_stack.top();
+        std::string x11='w'+x1.substr(1);
+        reg_stack.pop();
+        std::string x2=reg_stack.top();
+        reg_stack.pop();
+        std::string x22='w'+x2.substr(1);
+        std::cout << std::setw(cout_len) << "fmov " << x11 << ", " << r1 << std::endl;
+        std::cout << std::setw(cout_len) << "fmov " << x22 << ", " << r2 << std::endl;
+        std::cout << std::setw(cout_len) << "cmp " << x11 << ", " << x22 << std::endl;
+        reg_stack.push(x1);
+        reg_stack.push(x2);
     }
     if(binary_for_br)return;
     switch (op)

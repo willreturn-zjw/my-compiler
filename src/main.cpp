@@ -59,6 +59,7 @@ int main(int argc, const char *argv[]) {
 
   // 打开输入文件, 并且指定 lexer 在解析的时候读取这个文件
   yyin = fopen(input.c_str(), "r");
+  assert(yyin);
   if(yyin == nullptr) {
     cerr << "Failed to open input file: " << input <<" -"<<mode<< endl;
     return 1;
@@ -78,16 +79,9 @@ int main(int argc, const char *argv[]) {
   
   unique_ptr<BaseAST> ast;
   auto ret = yyparse(ast);
-  if (ret != 0 || !ast) {
-    std::cout.rdbuf(coutBuf);
-    outFile.close();
-    std::remove(parsefilename.c_str());
-    std::cerr << "syntax error: input could not be parsed" << std::endl;
-    return 1;
-  }
+  assert(!ret);
   //sysy库的函数声明
   funcm.printSysyDeclFunc();
-  //体
   ast->dump();
 
   std::cout.rdbuf(coutBuf); 
@@ -102,4 +96,5 @@ int main(int argc, const char *argv[]) {
   }
   return 0;
 }
+
 
