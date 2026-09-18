@@ -1,4 +1,4 @@
-"""Pytest entry point for all 30 data-driven compiler cases."""
+"""Pytest entry point for all data-driven compiler cases (TC01–TC46)."""
 
 from __future__ import annotations
 
@@ -20,7 +20,8 @@ def case_results(request: pytest.FixtureRequest):
 
 @pytest.mark.parametrize(
     "case",
-    CASES,
+    [pytest.param(case, marks=pytest.mark.extended if case.id >= 31 else pytest.mark.baseline)
+     for case in CASES],
     ids=lambda item: f"TC{item.id:02d}-{item.title}",
 )
 def test_compiler_case(case, compiler_path, request, case_results):

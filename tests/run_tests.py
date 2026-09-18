@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the 30 compiler test cases from 测试用例清单.xlsx.
+"""Run the compiler test cases defined in 测试用例.md.
 
 The harness intentionally uses only the Python standard library.  It runs each
 case in a private temporary directory because the compiler writes parse.kp in
@@ -59,9 +59,8 @@ def c(i: int, item: str, title: str, phase: str, source: str,
                 list(checks), list(forbidden), note)
 
 
-# The IDs and intent correspond to rows 1-30 of 测试用例清单.xlsx.  The
-# spreadsheet remains the review baseline; keeping executable expectations here
-# makes the run independent of Excel/openpyxl installations.
+# Baseline IDs correspond to rows 1–30 of 测试用例.md. Executable
+# expectations are independent of Excel/openpyxl installations.
 CASES: list[Case] = [
     c(1, "IR Lexer / src/ir/lexer.cpp", "关键字、符号与分隔符识别", "frontend",
       "int main(){return 0;}", [r"fun @main", r"ret 0"], note="等价类：关键字、符号、分隔符"),
@@ -148,6 +147,10 @@ CASES: list[Case] = [
       [r"\.align", r"sp", r"(str|stp)", r"(ldr|ldp)", r"bl[ \\t]+id"], note="场景法：高寄存器压力、调用保存恢复"),
 ]
 
+from extended_cases import make_cases, execute as execute_extended
+
+CASES.extend(make_cases(c))
+
 
 def find_compiler(explicit: str | None) -> Path | None:
     if explicit:
@@ -186,7 +189,13 @@ def run_case(case: Case, compiler: Path | None, keep: Path | None) -> Result:
                       int((time.perf_counter() - start) * 1000),
                       "未找到编译器可执行文件；使用 --compiler 指定，或先运行构建脚本")
     work = Path(tempfile.mkdtemp(prefix=f"sysy_tc_{case.id:02d}_"))
+    artifact_path = str(keep / f"TC{case.id:02d}") if keep else ""
     try:
+        if case.id >= 31:
+            execute_extended(case, compiler, work)
+            return Result(case.id, case.title, case.phase, case.criticality, "PASS",
+                          int((time.perf_counter() - start) * 1000), "所有静态断言通过",
+                          str(keep / f"TC{case.id:02d}") if keep else "")
         src = work / "input.sy"
         asm = work / "output.s"
         src.write_text(case.source, encoding="utf-8")
@@ -216,7 +225,6 @@ def run_case(case: Case, compiler: Path | None, keep: Path | None) -> Result:
                 detail, status = "所有静态断言通过", "PASS"
         if keep:
             dst = keep / f"TC{case.id:02d}"
-            shutil.copytree(work, dst, dirs_exist_ok=True)
             artifacts = str(dst)
         else:
             artifacts = ""
@@ -224,7 +232,7 @@ def run_case(case: Case, compiler: Path | None, keep: Path | None) -> Result:
                       int((time.perf_counter() - start) * 1000), detail, artifacts)
     except subprocess.TimeoutExpired:
         return Result(case.id, case.title, case.phase, case.criticality, "FAIL",
-                      int((time.perf_counter() - start) * 1000), "单条用例超过 20 秒")
+                      int((time.perf_counter() - start) * 1000), "单条用例超过 20 秒", artifact_path)
     except OSError as exc:
         # The target environment is Linux/AArch64.  ENOENT can mean that an
         # existing ELF cannot find its interpreter or a shared library, while
@@ -243,13 +251,15 @@ def run_case(case: Case, compiler: Path | None, keep: Path | None) -> Result:
             status = "FAIL"
             detail = repr(exc)
         return Result(case.id, case.title, case.phase, case.criticality, status,
-                      int((time.perf_counter() - start) * 1000), detail)
+                      int((time.perf_counter() - start) * 1000), detail, artifact_path)
     except Exception as exc:
         return Result(case.id, case.title, case.phase, case.criticality, "FAIL",
-                      int((time.perf_counter() - start) * 1000), repr(exc))
+                      int((time.perf_counter() - start) * 1000), repr(exc), artifact_path)
     finally:
-        if not keep:
-            shutil.rmtree(work, ignore_errors=True)
+        if keep:
+            dst = keep / f"TC{case.id:02d}"
+            shutil.copytree(work, dst, dirs_exist_ok=True)
+        shutil.rmtree(work, ignore_errors=True)
 
 
 def write_reports(results: list[Result], outdir: Path) -> None:
@@ -257,7 +267,7 @@ def write_reports(results: list[Result], outdir: Path) -> None:
     (outdir / "results.json").write_text(
         json.dumps([asdict(r) for r in results], ensure_ascii=False, indent=2), encoding="utf-8")
     with (outdir / "results.csv").open("w", newline="", encoding="utf-8-sig") as f:
-        w = csv.DictWriter(f, fieldnames=list(asdict(results[0]).keys()))
+        w = csv.DictWriter(f, fieldnames=list(Result.__dataclass_fields__))
         w.writeheader()
         w.writerows(asdict(r) for r in results)
     counts = {s: sum(r.status == s for r in results) for s in ("PASS", "FAIL", "BLOCKED")}
@@ -270,15 +280,15 @@ def write_reports(results: list[Result], outdir: Path) -> None:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Run all 30 SysY compiler test cases")
+    ap = argparse.ArgumentParser(description="Run all SysY compiler test cases")
     ap.add_argument("--compiler", help="compiler executable path")
     ap.add_argument("--out", default=str(ROOT / "test-results"), help="report directory")
     ap.add_argument("--keep-artifacts", action="store_true", help="keep per-case parse.kp/output.s")
     ap.add_argument("--case", type=int, action="append", help="run selected ID(s); default all")
     args = ap.parse_args()
     selected = [x for x in CASES if not args.case or x.id in args.case]
-    if len(CASES) != 30:
-        raise AssertionError(f"expected 30 cases, found {len(CASES)}")
+    if not selected:
+        ap.error("没有匹配的用例编号")
     compiler = find_compiler(args.compiler)
     keep = Path(args.out) / "artifacts" if args.keep_artifacts else None
     results = [run_case(case, compiler, keep) for case in selected]
