@@ -472,44 +472,39 @@ void fcmp_set_print(std::string r0,std::string r1,float imm,std::string r2,bool 
         fmov_print(temp_reg,imm,"",true,"");
         fcmp_set_print(r0,r1,0,temp_reg,false,op);
         sreg_stack.push(temp_reg);
+        return;
     }
     else 
     {
-        // Integer CMP compares IEEE-754 bit patterns, not floating-point
-        // values.  FCMP sets the floating-point condition flags required by
-        // the conditional moves below.
         std::cout << std::setw(cout_len) << "fcmp " << r1 << ", " << r2 << std::endl;
     }
     if(binary_for_br)return;
+    const char *condition = nullptr;
     switch (op)
     {
     case KOOPA_RBO_GT://>
-        mov_print(r0,1,"",true,"gt");
-        mov_print(r0,0,"",true,"le");
+        condition = "gt";
         break;
     case KOOPA_RBO_LT://<
-        mov_print(r0,1,"",true,"lt");
-        mov_print(r0,0,"",true,"ge");
+        condition = "mi";
         break;
     case KOOPA_RBO_LE://<=
-        mov_print(r0,1,"",true,"le");
-        mov_print(r0,0,"",true,"gt");
+        condition = "ls";
         break;
     case KOOPA_RBO_GE://>=
-        mov_print(r0,1,"",true,"ge");
-        mov_print(r0,0,"",true,"lt");
+        condition = "ge";
         break;
     case KOOPA_RBO_EQ://==
-        mov_print(r0,1,"",true,"eq");
-        mov_print(r0,0,"",true,"ne");
+        condition = "eq";
         break;
     case KOOPA_RBO_NOT_EQ://!=
-        mov_print(r0,1,"",true,"ne");
-        mov_print(r0,0,"",true,"eq");
+        condition = "ne";
         break;
     default:
         break;
     }
+    if (condition != nullptr)
+        std::cout << std::setw(cout_len) << "cset " << r0 << ", " << condition << std::endl;
 }
 
 //只打印cmp比较语句，arg1是比较寄存器r1，arg2是立即数，arg3是比较寄存器r2
@@ -612,4 +607,3 @@ void fcvt_print(std::string r0,std::string r1,bool float2int)
         std::cout << std::setw(cout_len) << "scvtf" <<" "<< r0 << ", " << r1 << std::endl;
 
 }
-
