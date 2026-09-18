@@ -14,6 +14,7 @@
 #define INT_TYPE 1
 #define FLOAT_TYPE 2
 #define SIZE_OF_STACK_UNIT 8
+#define SYSY_VALUE_SIZE 4
 
 
 std::string next_bb;
@@ -312,8 +313,8 @@ void Visit_func(const koopa_raw_function_t &func)
                     if (ptr->ty->data.pointer.base->tag == KOOPA_RTT_ARRAY)
                     {
                         array_length = cal_array_length(*ptr->ty->data.pointer.base);
-                        sp_offset += 8 * array_length;
-                        size_of_stack_frame += 8 * array_length;
+                        sp_offset += SYSY_VALUE_SIZE * array_length;
+                        size_of_stack_frame += SYSY_VALUE_SIZE * array_length;
                     }
                     else // TODO: ALLOC需不需要分配空间
                     {
@@ -450,7 +451,10 @@ void Visit_inst(const koopa_raw_value_t &value)
             {
                 koopa_raw_binary_op_t tmp = value->kind.data.binary.op;
                 // 注，目前只优化了大小比较，等于不等于；其它运算类型未优化
-                if (value->used_by.len == 1 && (tmp == KOOPA_RBO_EQ || tmp == KOOPA_RBO_NOT_EQ || tmp == KOOPA_RBO_GT || tmp == KOOPA_RBO_LT || tmp == KOOPA_RBO_GE || tmp == KOOPA_RBO_LE))
+                if (value->used_by.len == 1 &&
+                    get_value_type(kind.data.binary.lhs->ty) != FLOAT_TYPE &&
+                    get_value_type(kind.data.binary.rhs->ty) != FLOAT_TYPE &&
+                    (tmp == KOOPA_RBO_EQ || tmp == KOOPA_RBO_NOT_EQ || tmp == KOOPA_RBO_GT || tmp == KOOPA_RBO_LT || tmp == KOOPA_RBO_GE || tmp == KOOPA_RBO_LE))
                 {
                     auto ptr = value->used_by.buffer[0];
                     auto inst = reinterpret_cast<koopa_raw_value_t>(ptr);
@@ -841,9 +845,8 @@ void Visit_binary(const koopa_raw_binary_t &binary, const koopa_raw_value_t &val
                     mov_print(reg, 0, "", true, "");
                     break;
                 }
-                // AArch64 ASR rounds negative values toward negative infinity,
-                // while SysY signed division truncates toward zero.  Do not
-                // strength-reduce signed division by a power of two to ASR.
+                // AArch64 ASR rounds negative values toward minus infinity, while
+                // SysY signed division must truncate toward zero.
                 std::cout << std::setw(6) << "sdiv" << reg << ", " << lhs_reg << ", " << rhs_reg << std::endl;
             }
             else if (binary.op == KOOPA_RBO_MOD)
@@ -854,8 +857,8 @@ void Visit_binary(const koopa_raw_binary_t &binary, const koopa_raw_value_t &val
                     mov_print(reg, 0, "", true, "");
                     break;
                 }
-                // Bitwise AND does not implement signed remainder for negative
-                // dividends.  Compute a % b as a - (a / b) * b instead.
+                // AND is not a valid signed remainder lowering for negative
+                // dividends.  Compute lhs - trunc(lhs / rhs) * rhs instead.
                 std::string tmp_reg;
                 tmp_reg = regstack_pop(USE_INT_REG);
                 std::cout << std::setw(6) << "sdiv" << tmp_reg << ", " << lhs_reg << ", " << rhs_reg << std::endl;
@@ -1142,21 +1145,20 @@ void Visit_store(const koopa_raw_store_t &store)
         // 数组0初始化，TODO，可以优化 done
         if (store.dest->ty->tag == KOOPA_RTT_POINTER && store.dest->ty->data.pointer.base->tag == KOOPA_RTT_ARRAY)
         {
-            /// 数组在栈帧中第一个元素的前一个单元的偏移量
+            /// 数组地址前保留一个 8 字节槽，用于保存数组基址。
             int offset = stack_map[store.dest];
 
-            /// 取出数组的 （基地址 - 8）的值
             if (reg_stack.empty())
                 assert(false);
             std::string cur_reg = regstack_pop(USE_INT_REG);
             add_print(cur_reg, sp_reg, offset, "", true,"");
 
             /// 数组零初始化，用预索引的方式来实现
-            offset = 8;
+            offset = SIZE_OF_STACK_UNIT;
             for (size_t i = 0; i < cal_array_length(*store.dest->ty->data.pointer.base); i++)
             {
-                // 4对应预索引方式
                 str_print(zero_reg, cur_reg, offset, "", 4);
+                offset = SYSY_VALUE_SIZE;
             }
             regstack_push(cur_reg);
             return;
@@ -1671,35 +1673,30 @@ void Visit_global_alloc(const koopa_raw_global_alloc_t &global_alloc, const koop
 
     switch (global_alloc.init->kind.tag)
     {
-    // 整数初始化（32位int，按8字节存储）
+    // SysY 的 int/float 均为 32 位对象。
     case KOOPA_RVT_INTEGER: 
-        // 使用.xword（AArch64中定义64位数据），将32位整数扩展为64位
-        std::cout << ".xword " << (int64_t)global_alloc.init->kind.data.integer.value << std::endl;
+        std::cout << ".word " << global_alloc.init->kind.data.integer.value << std::endl;
         break;
 
-    // 浮点数初始化（32位float，按8字节存储）
     case KOOPA_RVT_FLOATNUM: 
-        // 将32位float转换为其IEEE 754编码（32位），再扩展为64位（高位补0）
-        float2uint32(global_alloc.init->kind.data.floatnum.value);  // fimm_32为32位编码
-        std::cout << ".xword " << (uint64_t)fimm_32 << std::endl;  // 按64位存储
+        float2uint32(global_alloc.init->kind.data.floatnum.value);
+        std::cout << ".word " << fimm_32 << std::endl;
         break;
 
     // 零初始化（全局变量默认值为0）
     case KOOPA_RVT_ZERO_INIT:
-        // 数组类型：每个元素占8字节（32位数据+4字节填充）
-        if (value->ty->data.array.base->tag == KOOPA_RTT_ARRAY)
+        // 全局数组和标量均按其 32 位元素宽度分配。
+        if (value->ty->data.pointer.base->tag == KOOPA_RTT_ARRAY)
         {
-            // 总大小 = 元素个数 * 8字节，对齐8字节
             std::cout << ".comm " << value->name + 1 
-                      << ',' << cal_array_length(*value->ty->data.array.base) * 8 
-                      << ',' << "8" << std::endl;
+                      << ',' << cal_array_length(*value->ty->data.pointer.base) * SYSY_VALUE_SIZE
+                      << ',' << SYSY_VALUE_SIZE << std::endl;
         }
-        // 基本类型（int32/float32）：强制占8字节
         else
         {
             std::cout << ".comm " << value->name + 1 
-                      << ',' << "8"  // 大小8字节
-                      << ',' << "8"  // 8字节对齐
+                      << ',' << SYSY_VALUE_SIZE
+                      << ',' << SYSY_VALUE_SIZE
                       << std::endl;
         }
         break;
@@ -1728,15 +1725,13 @@ void Visit_global_alloc(const koopa_raw_global_alloc_t &global_alloc, const koop
                 }
                 else
                 {
-                    // 先输出累计的零元素（每个占8字节）
                     if (zero_flag)
                     {
-                        std::cout << ".zero " << zero_count * 8 << std::endl;
+                        std::cout << ".zero " << zero_count * SYSY_VALUE_SIZE << std::endl;
                         zero_flag = false;
                         zero_count = 0;
                     }
-                    // 非零元素：用64位指令存储（32位值扩展为64位）
-                    std::cout << ".xword " << (int64_t)i << std::endl;
+                    std::cout << ".word " << i << std::endl;
                 }
             }
         }
@@ -1757,16 +1752,14 @@ void Visit_global_alloc(const koopa_raw_global_alloc_t &global_alloc, const koop
                 }
                 else
                 {
-                    // 先输出累计的零元素（每个占8字节）
                     if (zero_flag)
                     {
-                        std::cout << ".zero " << zero_count * 8 << std::endl;
+                        std::cout << ".zero " << zero_count * SYSY_VALUE_SIZE << std::endl;
                         zero_flag = false;
                         zero_count = 0;
                     }
-                    // 非零元素：转换为32位IEEE编码后，扩展为64位存储
                     float2uint32(i);
-                    std::cout << ".xword " << (uint64_t)fimm_32 << std::endl;
+                    std::cout << ".word " << fimm_32 << std::endl;
                 }
             }
         }
@@ -1774,7 +1767,7 @@ void Visit_global_alloc(const koopa_raw_global_alloc_t &global_alloc, const koop
         // 处理剩余的连续零元素
         if (zero_flag)
         {
-            std::cout << ".zero " << zero_count * 8 << std::endl;
+            std::cout << ".zero " << zero_count * SYSY_VALUE_SIZE << std::endl;
         }
         break;
     }
@@ -1813,14 +1806,14 @@ void Visit_elem_ptr(const koopa_raw_get_elem_ptr_t &get_elem_ptr, const koopa_ra
     index_reg = prep_operand(get_elem_ptr.index, reg, value);
     if (get_elem_ptr.index->kind.tag == KOOPA_RVT_INTEGER)
     {
-        int index_num = get_elem_ptr.index->kind.data.integer.value * cal_array_length(*get_elem_ptr.src->ty->data.array.base->data.array.base) * 8;
+        int index_num = get_elem_ptr.index->kind.data.integer.value * cal_array_length(*get_elem_ptr.src->ty->data.pointer.base->data.array.base) * SYSY_VALUE_SIZE;
         add_print(reg, src_reg, index_num, "", true,"");
     }
     else // index不是立即数
     {
         // 此时index_reg可能是分配寄存器中的一个
         std::string tmp_reg = regstack_pop(USE_INT_REG);
-        mov_print(tmp_reg, cal_array_length(*get_elem_ptr.src->ty->data.array.base->data.array.base) * 8, "", true, "");
+        mov_print(tmp_reg, cal_array_length(*get_elem_ptr.src->ty->data.pointer.base->data.array.base) * SYSY_VALUE_SIZE, "", true, "");
         std::cout << std::setw(6) << "madd" << reg << ", " << index_reg << ", " << tmp_reg << ", " << src_reg << std::endl;
         // std::cout << std::setw(6) << "mul" << tmp_reg << ", " << index_reg << ", " << tmp_reg << std::endl;
         if (is_temp_reg(index_reg))
@@ -1875,7 +1868,7 @@ void Visit_ptr(const koopa_raw_get_ptr_t &get_ptr, const koopa_raw_value_t &valu
     else
     {
         std::string tmp_reg = regstack_pop(USE_INT_REG);
-        mov_print(tmp_reg, cal_array_length(*get_ptr.src->ty->data.array.base), "", true, "");
+        mov_print(tmp_reg, cal_array_length(*get_ptr.src->ty->data.pointer.base), "", true, "");
         std::cout << std::setw(6) << "mul" << tmp_reg << ", " << index_reg << ", " << tmp_reg << std::endl;
         if (is_temp_reg(index_reg))
         {
@@ -1883,7 +1876,7 @@ void Visit_ptr(const koopa_raw_get_ptr_t &get_ptr, const koopa_raw_value_t &valu
         }
         index_reg = tmp_reg;
     }
-    std::cout << std::setw(6) << "lsl" << index_reg << ", " << index_reg << ", #3" << std::endl;
+    std::cout << std::setw(6) << "lsl" << index_reg << ", " << index_reg << ", #2" << std::endl;
 
     // 计算地址
     add_print(reg, src_reg, 0, index_reg, false,"");
@@ -1929,7 +1922,7 @@ int cal_aggregate_length(const koopa_raw_value_t &value)
         }
         return length;
     }
-    return 8;
+    return SYSY_VALUE_SIZE;
 }
 // needs more instur
 
