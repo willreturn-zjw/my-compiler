@@ -275,16 +275,10 @@ void VarDefAST::variable_dump(){
         if(initval!=nullptr){
             initval->up_calc();
             if(initval->calc_f){
-                if(type==BINT){
-                    int initial_value=initval->calc();
-                    std::cout<<"store "<<initial_value<<", "<<"@"<<val_table.Get_Name(ident)<<std::endl;
-                    val_table.SetKnownInitializerValue(ident,initial_value);
-                }
-                if(type==BFLOAT){
-                    float initial_value=initval->fcalc();
-                    std::cout<<"store "<<floatToBinary(initial_value)<<", "<<"@"<<val_table.Get_Name(ident)<<std::endl;
-                    val_table.SetKnownInitializerValue(ident,initial_value);
-                }
+                if(type==BINT)
+                std::cout<<"store "<<initval->calc()<<", "<<"@"<<val_table.Get_Name(ident)<<std::endl;
+                if(type==BFLOAT)
+                std::cout<<"store "<<floatToBinary(initval->fcalc())<<", "<<"@"<<val_table.Get_Name(ident)<<std::endl;
             }
             else{
                 initval->dump();
@@ -500,9 +494,6 @@ void AssignAST::variable_dump() {
             exp->dump();
             std::cout<<"store "<<"%"<<now-1<<", "<<val_name<<std::endl;
         }
-        // An assignment can be reached through different control-flow paths;
-        // conservatively stop propagating the initializer value afterwards.
-        val_table.ClearKnownInitializerValue(ident);
     }
 }
 
@@ -877,8 +868,8 @@ void LValAST::dump() {
 void LValAST::Variable_dump() {
     //value是int类型的   fvalue是float类型的   
     if(calc_f){//若左值可以计算，(f)value是其对应的值
-        if(val_table.get(ident).type==BFLOAT)std::cout<<"%"<<now<<"= "<<"add 0, "<<floatToBinary(fcalc())<<std::endl;
-        else std::cout<<"%"<<now<<"= "<<"add 0, "<<calc()<<std::endl;
+        if(val_table.get(ident).type==BFLOAT)std::cout<<"%"<<now<<"= "<<"add 0, "<<floatToBinary(val_table.get(ident).fvalue)<<std::endl;
+        else std::cout<<"%"<<now<<"= "<<"add 0, "<<val_table.get(ident).value<<std::endl;
     }
     else{//若不可计算，那么(f)value用来区分是变量还是函数参数  0时为变量  1时为数组参数
         int tmp=val_table.get(ident).value;
