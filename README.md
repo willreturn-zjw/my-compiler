@@ -22,7 +22,7 @@
 
 `src/opt/dfa.cpp` 的主要可测行为是：建立基本块前驱/后继关系，收集每条指令的 def/use，迭代计算 live-in/live-out，使用 Tarjan 算法识别循环，并据此计算活跃区间。
 
-`src/opt` 还维护支配关系、符号使用关系和部分优化所需的数据结构。当前 `Optimizer::init_used_by` 负责重建指令的使用关系；优化测试应以实际启用的 pass 为准。
+`src/opt` 还维护支配关系、符号使用关系和部分优化所需的数据结构。当前 `Optimizer::init_used_by` 负责重建指令的使用关系；优化测试应以实际启用的 pass 为准，不应默认所有声明的优化接口都已经完成。
 
 ## 后端支持概览
 
@@ -59,7 +59,7 @@
 
 后端分别统计整数参数和浮点参数：前若干个参数优先使用参数寄存器，超出寄存器数量的参数放置到调用栈区域；返回值分别通过整数返回寄存器或浮点返回寄存器传递。函数调用前后会根据当前函数是否存在子调用决定是否保存和恢复链接寄存器。
 
-当前实现仍保留实验性寄存器和栈帧策略，调用约定、被调用者保存寄存器、spill 以及混合整数/浮点参数应作为重点测试对象。
+由于当前实现仍保留实验性寄存器和栈帧策略，调用约定、被调用者保存寄存器、spill 以及混合整数/浮点参数应作为重点测试对象。
 
 ## 编译流程
 
@@ -77,18 +77,15 @@ SysY 源码
   -> ARMv8 汇编
 ```
 
-前端 AST 当前通过 `dump()` 直接输出 Koopa IR 文本，后端阶段再由 `src/ir` 重新解析该文本。因此 `parse.kp` 是两阶段之间的中间产物，默认写入test文件所在工作目录。
+前端 AST 当前通过 `dump()` 直接输出 Koopa IR 文本，后端阶段再由 `src/ir` 重新解析该文本。因此 `parse.kp` 是两阶段之间的中间产物，默认写入当前工作目录。
 
 ## 构建与使用
 
 构建脚本为 `build.sh`，依赖 Bash、Flex、Bison 和支持 C++17 的 Clang：
 
 ```bash
-chmod +x build.sh
-./build.sh
+bash build.sh
 ```
-
-脚本会生成 build/ 下的目标文件，并将可执行文件链接为 test/compiler。如果编译器、Flex 或 Bison 不在 PATH 中，脚本会失败。
 
 编译器命令行形式：
 
@@ -124,7 +121,7 @@ test/compiler -S <input.sy> -o <output.s>
 
 测试依赖新增pytest>=7.0。
 
-测试清单 `测试用例清单.xlsx` 共包含 30 条用例：TC01–TC15 覆盖前端和 Koopa IR/分析链路，TC16–TC30 覆盖 Koopa IR 到 ARMv8 汇编链路。自动化测试采用 pytest，入口为 `tests/test_compiler.py`，用例数据和公共执行器位于 `tests/run_tests.py`。
+当前按 `测试用例.md` 自动执行 46 条用例：TC01–TC15 覆盖前端和 Koopa IR/分析链路，TC16–TC30 覆盖 Koopa IR 到 ARMv8 汇编链路，TC31–TC46 补充短路、类型转换、调用、数据布局、控制流、错误处理和命令行场景。pytest 入口为 `tests/test_compiler.py`，公共执行器位于 `tests/run_tests.py`，新增用例及结构断言位于 `tests/extended_cases.py`。
 
 详细的测试范围、单条用例流程、状态判定和完成标准见 [`tests/TEST_PROCESS.md`](tests/TEST_PROCESS.md)。
 
@@ -136,11 +133,19 @@ test/compiler -S <input.sy> -o <output.s>
 4. 记录每条用例的 `PASS`、`FAIL` 或 `BLOCKED`，输出 JSON、CSV 和 Markdown 汇总；
 5. 不执行生成的汇编，不进行 AArch64 汇编、链接或运行，因此不要求本机具备 AArch64 环境。
 
-默认运行全部 30 条用例（目标环境按 Linux/AArch64 处理）：
+默认运行全部 46 条用例（Linux 主机，汇编目标为 AArch64）：
 
 ```bash
 python -m pytest -q tests/test_compiler.py --compiler test/compiler
 ```
+
+仅运行新增 TC31–TC46（推荐保留诊断产物）：
+
+```bash
+python3 -m pytest -q tests/test_compiler.py -m extended --compiler ./test/compiler --keep-artifacts
+```
+
+仅运行原有前三十条使用 `-m baseline`。执行器自身回归测试使用 `python3 -m pytest -q tests/test_extended_harness.py`，其结果不代表被测编译器通过。
 
 如果编译器尚未构建，可先执行 `bash build.sh`，然后重新运行测试。应在 Linux/WSL/AArch64 环境中提供可运行的 ELF 编译器：
 
@@ -164,7 +169,7 @@ python -m pytest -q tests/test_compiler.py --compiler ./test/compiler -k 'TC16 o
 
 ### pytest 核心设计
 
-- 参数化/数据驱动：`CASES` 是 30 条结构化 `Case` 数据，`@pytest.mark.parametrize` 自动生成 TC01–TC30；测试逻辑只实现一次。
+- 参数化/数据驱动：`CASES` 是 46 条结构化 `Case` 数据，`@pytest.mark.parametrize` 自动生成 TC01–TC46；TC31–TC46 共用扩展执行器，支持多次调用和预期错误退出。
 - 测试数据组织：每条记录包含阶段、源代码、正向正则断言、禁止模式、重要级别和测试方法备注；新增用例无需复制测试函数。
 - 外部依赖处理：编译器路径通过 `--compiler` 注入并在启动临时目录前解析为绝对路径。不存在或无法启动时使用 pytest `skip` 表示环境阻塞，不伪造通过结果。
 - 隔离与并发安全：每条用例使用独立临时目录，隔离固定生成的 `parse.kp`；不执行汇编、链接或 AArch64 程序。
@@ -185,5 +190,4 @@ src/                     源文件
   back/                  ARMv8 后端实现
 test/                    示例输入、参考 IR/汇编及编译器产物
 build.sh                 构建脚本
-tests/                   全自动测试
 ```
