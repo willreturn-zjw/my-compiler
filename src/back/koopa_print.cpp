@@ -167,7 +167,7 @@ void mov_print(std::string dstreg, int64_t imm, std::string srcreg, bool imm2reg
 //可以处理正/负立即数，但绝对值必须小于0xff，否则扩充语句
 // 判断一个立即数是否在64位ADD/SUB指令的有效范围内
 
-void add_print(std::string r0, std::string r1, int64_t imm, std::string r2, bool addimm, std::string cond) 
+void add_print(std::string r0, std::string r1, int64_t imm, std::string r2, bool addimm, std::string cond)
 {
     total_add_times += 1;
     
@@ -175,6 +175,28 @@ void add_print(std::string r0, std::string r1, int64_t imm, std::string r2, bool
     bool is64bit = (r0[0] == 'x' || r0[0] == 'X');
     const std::string tmp_reg = reg_stack.top();
     reg_stack.pop();
+    // Keep large stack-frame adjustments as encodable SP-immediate operations.
+    // AArch64 assemblers accept a multiple of 4096 here and encode it using
+    // the shifted 12-bit immediate form. Split off the low remainder when the
+    // complete adjustment cannot be represented by one instruction.
+    if (addimm && cond.empty() && r0 == "sp" && r1 == "sp" &&
+        (imm > 0xFFF || imm < -0xFFF)) {
+        uint64_t remaining = imm < 0 ? static_cast<uint64_t>(-imm) : static_cast<uint64_t>(imm);
+        const char *op = imm < 0 ? "sub" : "add";
+        const uint64_t max_shifted = static_cast<uint64_t>(0xFFF) << 12;
+        while (remaining > 0xFFF) {
+            uint64_t shifted = (remaining >> 12) << 12;
+            uint64_t chunk = shifted < max_shifted ? shifted : max_shifted;
+            if (chunk == 0) break;
+            std::cout << std::setw(cout_len) << op << " sp, sp, #" << chunk
+                      << " // shifted 12-bit immediate" << std::endl;
+            remaining -= chunk;
+        }
+        if (remaining != 0)
+            std::cout << std::setw(cout_len) << op << " sp, sp, #" << remaining << std::endl;
+        reg_stack.push(tmp_reg);
+        return;
+    }
     if (addimm){
          // 临时寄存器（假设未被占用）
         // 检查是否在有效立即数范围内
@@ -476,17 +498,7 @@ void fcmp_set_print(std::string r0,std::string r1,float imm,std::string r2,bool 
     }
     else 
     {
-        std::string x1=reg_stack.top();
-        std::string x11='w'+x1.substr(1);
-        reg_stack.pop();
-        std::string x2=reg_stack.top();
-        reg_stack.pop();
-        std::string x22='w'+x2.substr(1);
-        std::cout << std::setw(cout_len) << "fmov " << x11 << ", " << r1 << std::endl;
-        std::cout << std::setw(cout_len) << "fmov " << x22 << ", " << r2 << std::endl;
-        std::cout << std::setw(cout_len) << "cmp " << x11 << ", " << x22 << std::endl;
-        reg_stack.push(x1);
-        reg_stack.push(x2);
+        std::cout << std::setw(cout_len) << "fcmp " << r1 << ", " << r2 << std::endl;
     }
     if(binary_for_br)return;
     const char *condition = nullptr;
