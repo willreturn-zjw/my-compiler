@@ -10,6 +10,11 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def pytest_configure(config: pytest.Config) -> None:
+    config.addinivalue_line("markers", "extended: compiler cases TC31 and later")
+    config.addinivalue_line("markers", "baseline: compiler cases TC01–TC30")
+
+
 def pytest_addoption(parser: pytest.Parser) -> None:
     group = parser.getgroup("compiler")
     group.addoption("--compiler", action="store", default=None,

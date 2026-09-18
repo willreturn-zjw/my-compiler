@@ -5,7 +5,7 @@
     "phase": "frontend",
     "criticality": "高",
     "status": "PASS",
-    "duration_ms": 3,
+    "duration_ms": 1,
     "details": "所有静态断言通过",
     "artifacts": ""
   },
@@ -25,7 +25,7 @@
     "phase": "frontend",
     "criticality": "高",
     "status": "PASS",
-    "duration_ms": 1,
+    "duration_ms": 2,
     "details": "所有静态断言通过",
     "artifacts": ""
   },
@@ -45,7 +45,7 @@
     "phase": "frontend",
     "criticality": "高",
     "status": "FAIL",
-    "duration_ms": 1,
+    "duration_ms": 2,
     "details": "缺少: ret 0",
     "artifacts": ""
   },
@@ -65,7 +65,7 @@
     "phase": "frontend",
     "criticality": "高",
     "status": "PASS",
-    "duration_ms": 2,
+    "duration_ms": 1,
     "details": "所有静态断言通过",
     "artifacts": ""
   },
@@ -145,7 +145,7 @@
     "phase": "frontend",
     "criticality": "高",
     "status": "PASS",
-    "duration_ms": 2,
+    "duration_ms": 1,
     "details": "所有静态断言通过",
     "artifacts": ""
   },
@@ -195,7 +195,7 @@
     "phase": "backend",
     "criticality": "高",
     "status": "PASS",
-    "duration_ms": 2,
+    "duration_ms": 1,
     "details": "所有静态断言通过",
     "artifacts": ""
   },
@@ -245,7 +245,7 @@
     "phase": "backend",
     "criticality": "高",
     "status": "PASS",
-    "duration_ms": 1,
+    "duration_ms": 2,
     "details": "所有静态断言通过",
     "artifacts": ""
   },
@@ -255,7 +255,7 @@
     "phase": "backend",
     "criticality": "高",
     "status": "PASS",
-    "duration_ms": 1,
+    "duration_ms": 2,
     "details": "所有静态断言通过",
     "artifacts": ""
   },
@@ -296,6 +296,166 @@
     "criticality": "高",
     "status": "PASS",
     "duration_ms": 1,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 31,
+    "title": "逻辑与、逻辑或和逻辑非的短路控制流",
+    "phase": "backend",
+    "criticality": "高",
+    "status": "PASS",
+    "duration_ms": 2,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 32,
+    "title": "整数与浮点混合运算及比较转换",
+    "phase": "backend",
+    "criticality": "高",
+    "status": "FAIL",
+    "duration_ms": 2,
+    "details": "AssertionError('缺少模式：^\\\\s*fcmp\\\\w*\\\\s+')",
+    "artifacts": ""
+  },
+  {
+    "id": 33,
+    "title": "void 函数调用与隐式返回",
+    "phase": "backend",
+    "criticality": "高",
+    "status": "PASS",
+    "duration_ms": 2,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 34,
+    "title": "整数与浮点 I/O 及计时函数调用",
+    "phase": "backend",
+    "criticality": "高",
+    "status": "PASS",
+    "duration_ms": 2,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 35,
+    "title": "递归函数的返回值、分支与链接寄存器保护",
+    "phase": "backend",
+    "criticality": "高",
+    "status": "PASS",
+    "duration_ms": 2,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 36,
+    "title": "嵌套多函数调用与中间返回值保存",
+    "phase": "backend",
+    "criticality": "高",
+    "status": "PASS",
+    "duration_ms": 2,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 37,
+    "title": "全局常量、零初始化标量和零初始化数组",
+    "phase": "backend",
+    "criticality": "高",
+    "status": "FAIL",
+    "duration_ms": 1,
+    "details": "AssertionError('缺少全局对象 g')",
+    "artifacts": ""
+  },
+  {
+    "id": 38,
+    "title": "大局部数组的首尾元素读写",
+    "phase": "backend",
+    "criticality": "高",
+    "status": "FAIL",
+    "duration_ms": 2,
+    "details": "AssertionError('末元素地址未按 1023×4 = 4092 字节偏移构造')",
+    "artifacts": ""
+  },
+  {
+    "id": 39,
+    "title": "9 个整数与 9 个浮点混合参数溢出到栈",
+    "phase": "backend",
+    "criticality": "高",
+    "status": "PASS",
+    "duration_ms": 3,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 40,
+    "title": "浮点函数返回值参与后续比较",
+    "phase": "backend",
+    "criticality": "高",
+    "status": "FAIL",
+    "duration_ms": 2,
+    "details": "AssertionError('缺少模式：^\\\\s*fcmp\\\\w*\\\\s+')",
+    "artifacts": ""
+  },
+  {
+    "id": 41,
+    "title": "内层 break/continue 的最近循环目标",
+    "phase": "backend",
+    "criticality": "高",
+    "status": "PASS",
+    "duration_ms": 2,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 42,
+    "title": "菱形 CFG 合流后的变量定义与使用",
+    "phase": "backend",
+    "criticality": "高",
+    "status": "PASS",
+    "duration_ms": 2,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 43,
+    "title": "非法 SysY 语法的诊断与产物阻断",
+    "phase": "backend",
+    "criticality": "中",
+    "status": "FAIL",
+    "duration_ms": 5,
+    "details": "AssertionError('语法错误应正常非零退出，实际 -6（负数表示信号崩溃）')",
+    "artifacts": ""
+  },
+  {
+    "id": 44,
+    "title": "无 -S、-O 等级与指定输出路径",
+    "phase": "backend",
+    "criticality": "中",
+    "status": "PASS",
+    "duration_ms": 3,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 45,
+    "title": "含空格的输入和汇编输出文件名",
+    "phase": "backend",
+    "criticality": "中",
+    "status": "PASS",
+    "duration_ms": 1,
+    "details": "所有静态断言通过",
+    "artifacts": ""
+  },
+  {
+    "id": 46,
+    "title": "同目录连续编译的 IR 覆盖与状态重置",
+    "phase": "backend",
+    "criticality": "中",
+    "status": "PASS",
+    "duration_ms": 3,
     "details": "所有静态断言通过",
     "artifacts": ""
   }
