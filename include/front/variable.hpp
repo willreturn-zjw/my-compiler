@@ -13,6 +13,10 @@ public:
 	int value=-1; /**变量的值（对于常量，可直接取用）（对于变量，这个值用来区别参数与变量） * 对于常量，这个就是其值对于变量，用来区分参数与变量，为0时是变量，为1时是函数数组参数  ，大于1是代表函数参数*/
 	float fvalue=-1;//浮点型变量的值
 	bool const_var;//是否为常量
+	// 局部标量以常量表达式初始化后可用于前端常量传播；任何赋值都会使其失效。
+	bool known_from_initializer=false;
+	int known_value=0;
+	float known_fvalue=0.0f;
 	Btype type;//新增类型属性 whf 7/10
 	//下两条属性用于数组
 	bool array_const=false;//是否为数组常量
@@ -68,8 +72,11 @@ class Val_Table{
 		void Record(std::string name,float value,bool const_flag,Btype type,bool array_const);
 		void Record(std::string name,float value,bool const_flag,Btype type,bool array_const,int array_size);
 		std::string Get_Name(std::string prim_name);//加上前缀，定位到正确的变量
-		void valuePlus1(std::string name);
-		int get_field_idx();
+	void valuePlus1(std::string name);
+	void SetKnownInitializerValue(std::string name,int value);
+	void SetKnownInitializerValue(std::string name,float value);
+	void ClearKnownInitializerValue(std::string name);
+	int get_field_idx();
 };
 
 class ArrayInfo{

@@ -847,14 +847,10 @@ void Visit_binary(const koopa_raw_binary_t &binary, const koopa_raw_value_t &val
                     mov_print(reg, 0, "", true, "");
                     break;
                 }
-                if (rhs_is_integer && getPowerOfTwo(binary.rhs->kind.data.integer.value) != -1)
-                {
-                    // 除法削弱成右移
-                    int power2 = getPowerOfTwo(binary.rhs->kind.data.integer.value);
-                    std::cout << std::setw(6) << "asr" << reg << ", " << lhs_reg << ", #" << power2 << std::endl;
-                }
-                else
-                    std::cout << std::setw(6) << "sdiv" << reg << ", " << lhs_reg << ", " << rhs_reg << std::endl;
+                // AArch64 ASR rounds negative values toward negative infinity,
+                // while SysY signed division truncates toward zero.  Do not
+                // strength-reduce signed division by a power of two to ASR.
+                std::cout << std::setw(6) << "sdiv" << reg << ", " << lhs_reg << ", " << rhs_reg << std::endl;
             }
             else if (binary.op == KOOPA_RBO_MOD)
             {
@@ -864,21 +860,14 @@ void Visit_binary(const koopa_raw_binary_t &binary, const koopa_raw_value_t &val
                     mov_print(reg, 0, "", true, "");
                     break;
                 }
-                // TODO6: 除数为2的幂
-                if (rhs_is_integer && getPowerOfTwo(binary.rhs->kind.data.integer.value) != -1)
-                {
-                    // mod削弱成and
-                    std::cout << std::setw(6) << "and" << reg << ", " << lhs_reg << ", #" << binary.rhs->kind.data.integer.value - 1 << std::endl;
-                }
-                else
-                {
-                    std::string tmp_reg;
-                    tmp_reg = regstack_pop(USE_INT_REG);
-                    std::cout << std::setw(6) << "sdiv" << tmp_reg << ", " << lhs_reg << ", " << rhs_reg << std::endl;
-                    std::cout << std::setw(6) << "mul" << tmp_reg << ", " << tmp_reg << ", " << rhs_reg << std::endl;
-                    std::cout << std::setw(6) << "sub" << reg << ", " << lhs_reg << ", " << tmp_reg << std::endl;
-                    reg_stack.push(tmp_reg);
-                }
+                // Bitwise AND does not implement signed remainder for negative
+                // dividends.  Compute a % b as a - (a / b) * b instead.
+                std::string tmp_reg;
+                tmp_reg = regstack_pop(USE_INT_REG);
+                std::cout << std::setw(6) << "sdiv" << tmp_reg << ", " << lhs_reg << ", " << rhs_reg << std::endl;
+                std::cout << std::setw(6) << "mul" << tmp_reg << ", " << tmp_reg << ", " << rhs_reg << std::endl;
+                std::cout << std::setw(6) << "sub" << reg << ", " << lhs_reg << ", " << tmp_reg << std::endl;
+                reg_stack.push(tmp_reg);
             }
             else if (binary.op == KOOPA_RBO_MUL && rhs_is_integer && getPowerOfTwo(binary.rhs->kind.data.integer.value) != -1)
             {

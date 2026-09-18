@@ -148,7 +148,8 @@ int LValAST::calc(){
         std::cout<<"error: can't be directly calculated"<<std::endl;
         throw std::runtime_error("error: can't be directly calculated");
     }
-    return val_table.get(ident).value;
+    const auto& info=val_table.get(ident);
+    return info.const_var ? info.value : info.known_value;
 }
 
 double LValAST::fcalc() {
@@ -158,7 +159,8 @@ double LValAST::fcalc() {
         std::cout << "error: can't be directly calculated" << std::endl;
         throw std::runtime_error("error: can't be directly calculated");
     }
-    return val_table.get(ident).fvalue;
+    const auto& info=val_table.get(ident);
+    return info.const_var ? info.fvalue : info.known_fvalue;
 }
 
 int OptionExpAST::calc(){
@@ -231,8 +233,9 @@ void NumberAST::up_calc(){
 }
 void LValAST::up_calc(){
     if(ident!=""){
-        calc_f=val_table.get(ident).const_var;
-        val_type=val_table.get(ident).type;
+        const auto& info=val_table.get(ident);
+        calc_f=info.const_var || info.known_from_initializer;
+        val_type=info.type;
     }else{
         calc_f=false;
         val_type = BVOID;

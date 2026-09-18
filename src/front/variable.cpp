@@ -123,6 +123,40 @@ void Val_Table::valuePlus1(std::string name){
 	else t_stack[1].val_map[name].value++;
 }
 
+void Val_Table::SetKnownInitializerValue(std::string name,int value){
+	for(auto it=t_stack.rbegin();it!=t_stack.rend();++it){
+		auto val=it->val_map.find(name);
+		if(val==it->val_map.end())continue;
+		if(it->field_idx!=0 && !val->second.const_var && val->second.array_size==0){
+			val->second.known_from_initializer=true;
+			val->second.known_value=value;
+		}
+		return;
+	}
+}
+
+void Val_Table::SetKnownInitializerValue(std::string name,float value){
+	for(auto it=t_stack.rbegin();it!=t_stack.rend();++it){
+		auto val=it->val_map.find(name);
+		if(val==it->val_map.end())continue;
+		if(it->field_idx!=0 && !val->second.const_var && val->second.array_size==0){
+			val->second.known_from_initializer=true;
+			val->second.known_fvalue=value;
+		}
+		return;
+	}
+}
+
+void Val_Table::ClearKnownInitializerValue(std::string name){
+	for(auto it=t_stack.rbegin();it!=t_stack.rend();++it){
+		auto val=it->val_map.find(name);
+		if(val==it->val_map.end())continue;
+		if(it->field_idx!=0 && !val->second.const_var)
+			val->second.known_from_initializer=false;
+		return;
+	}
+}
+
 int Val_Table::get_field_idx(){
 	return t_stack.back().field_idx;
 }
