@@ -25,7 +25,7 @@
     "phase": "frontend",
     "criticality": "高",
     "status": "PASS",
-    "duration_ms": 2,
+    "duration_ms": 1,
     "details": "所有静态断言通过",
     "artifacts": ""
   },
@@ -44,9 +44,9 @@
     "title": "整数与浮点字面量",
     "phase": "frontend",
     "criticality": "高",
-    "status": "FAIL",
-    "duration_ms": 2,
-    "details": "缺少: ret 0",
+    "status": "PASS",
+    "duration_ms": 1,
+    "details": "所有静态断言通过",
     "artifacts": ""
   },
   {
@@ -54,9 +54,9 @@
     "title": "常量、局部作用域与遮蔽",
     "phase": "frontend",
     "criticality": "高",
-    "status": "FAIL",
+    "status": "PASS",
     "duration_ms": 1,
-    "details": "缺少: ret 15",
+    "details": "所有静态断言通过",
     "artifacts": ""
   },
   {
@@ -205,7 +205,7 @@
     "phase": "backend",
     "criticality": "高",
     "status": "PASS",
-    "duration_ms": 2,
+    "duration_ms": 1,
     "details": "所有静态断言通过",
     "artifacts": ""
   },
@@ -215,7 +215,7 @@
     "phase": "backend",
     "criticality": "高",
     "status": "PASS",
-    "duration_ms": 2,
+    "duration_ms": 1,
     "details": "所有静态断言通过",
     "artifacts": ""
   },
@@ -245,7 +245,7 @@
     "phase": "backend",
     "criticality": "高",
     "status": "PASS",
-    "duration_ms": 2,
+    "duration_ms": 1,
     "details": "所有静态断言通过",
     "artifacts": ""
   },
@@ -255,7 +255,7 @@
     "phase": "backend",
     "criticality": "高",
     "status": "PASS",
-    "duration_ms": 2,
+    "duration_ms": 1,
     "details": "所有静态断言通过",
     "artifacts": ""
   },
@@ -315,7 +315,7 @@
     "phase": "backend",
     "criticality": "高",
     "status": "FAIL",
-    "duration_ms": 2,
+    "duration_ms": 1,
     "details": "AssertionError('缺少模式：^\\\\s*fcmp\\\\w*\\\\s+')",
     "artifacts": ""
   },
@@ -376,7 +376,7 @@
     "criticality": "高",
     "status": "FAIL",
     "duration_ms": 2,
-    "details": "AssertionError('末元素地址未按 1023×4 = 4092 字节偏移构造')",
+    "details": "AssertionError('缺少至少 4096 字节且 16 字节对齐的栈帧')",
     "artifacts": ""
   },
   {
@@ -405,7 +405,7 @@
     "phase": "backend",
     "criticality": "高",
     "status": "PASS",
-    "duration_ms": 2,
+    "duration_ms": 1,
     "details": "所有静态断言通过",
     "artifacts": ""
   },
@@ -415,7 +415,7 @@
     "phase": "backend",
     "criticality": "高",
     "status": "PASS",
-    "duration_ms": 2,
+    "duration_ms": 1,
     "details": "所有静态断言通过",
     "artifacts": ""
   },
@@ -424,9 +424,9 @@
     "title": "非法 SysY 语法的诊断与产物阻断",
     "phase": "backend",
     "criticality": "中",
-    "status": "FAIL",
-    "duration_ms": 5,
-    "details": "AssertionError('语法错误应正常非零退出，实际 -6（负数表示信号崩溃）')",
+    "status": "PASS",
+    "duration_ms": 1,
+    "details": "所有静态断言通过",
     "artifacts": ""
   },
   {
@@ -435,7 +435,7 @@
     "phase": "backend",
     "criticality": "中",
     "status": "PASS",
-    "duration_ms": 3,
+    "duration_ms": 2,
     "details": "所有静态断言通过",
     "artifacts": ""
   },
