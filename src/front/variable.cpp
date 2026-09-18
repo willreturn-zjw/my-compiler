@@ -84,9 +84,10 @@ std::string Val_Table::Get_Name(std::string prim_name){
 		auto& table=*it;
 		auto val=table.val_map.find(prim_name);
 		if(val!=table.val_map.end()){
-			// 全局作用域和函数最外层作用域都保留源码名称；仅嵌套
-			// 作用域需要前缀来区分同名局部变量。
-			if(table.field_idx<=1)return prim_name;
+			// IR parser uses the __filed0__ prefix to distinguish globals from
+			// function-local @ symbols. Only the function's outermost scope keeps
+			// the source name; global and nested scopes retain their field prefix.
+			if(table.field_idx==1)return prim_name;
 			else
 				return "__filed"+std::to_string(table.field_idx)+"__"+prim_name;
 		}
