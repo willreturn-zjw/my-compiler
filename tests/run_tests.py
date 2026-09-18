@@ -75,19 +75,10 @@ CASES: list[Case] = [
       [r"ret 5"], [r"add .*1", r"mul .*2"], note="等价类：常量表达式和优先级"),
     c(5, "前端词法与 AST / src/front/sysy.l,sysy.y", "整数与浮点字面量", "frontend",
       "float g = 0.5;\nint main(){ int a=0; float b=5.0; return a; }\n",
-<<<<<<< HEAD
-      [r"f32", r"0\.5|0\.500000|#", r"alloc i32", r"store 0", r"load", r"ret %"],
-      note="等价类：整数/浮点字面量及局部变量返回"),
-    c(6, "符号表 / src/front/variable.cpp", "常量、局部作用域与遮蔽", "frontend",
-      "const int k=14; int main(){ int a=k+1; {int a=2; a=a+1;} return a;}\n",
-      [r"@a\s*=\s*alloc i32", r"store 15,\s*@a", r"@__filed\d+__a\s*=\s*alloc i32",
-       r"load @a", r"ret %"], note="等价类：常量、嵌套作用域、同名遮蔽"),
-=======
       [r"f32", r"0\.5|0\.500000|#", r"\bret\b"], note="等价类：整数/浮点字面量"),
     c(6, "符号表 / src/front/variable.cpp", "常量、局部作用域与遮蔽", "frontend",
       "const int k=14; int main(){ int a=k+1; {int a=2; a=a+1;} return a;}\n",
       [r"(?:15|store|load)", r"alloc i32"], note="等价类：常量、嵌套作用域、同名遮蔽"),
->>>>>>> f13101b06b87ec561efb418a907a3eb3694373ce
     c(7, "函数管理 / src/front/funcManager.cpp", "非 void 函数定义与调用", "frontend",
       "int add(int a,int b){return a+b;} int main(){return add(2,3);}\n",
       [r"fun @add", r"call @add", r"ret"], note="等价类：非 void 函数和实参调用"),
