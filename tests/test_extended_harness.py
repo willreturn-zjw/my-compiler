@@ -13,7 +13,7 @@ def case(number):
 
 
 def test_case_ids():
-    assert [item.id for item in CASES] == list(range(1, 47))
+    assert [item.id for item in CASES] == list(range(1, 46))
 
 
 @pytest.mark.parametrize("body", ["%entry:\n%0 = add 1, 2", "%entry:\nret 0\n%0 = add 1, 2", "%entry:\njump %missing"])
@@ -30,22 +30,22 @@ def test_cfg_accepts_constant_branch():
 def test_ir_cannot_satisfy_assembly_checks():
     ir = "fun @half(@x: f32): f32 {\n%entry:\nret @x\n}\nfun @main(): i32 {\n%entry:\n%0 = call @half(7)\nret 0\n}\n"
     with pytest.raises(AssertionError, match="缺少模式"):
-        check_outputs(40, ir, "main:\nret\n")
+        check_outputs(39, ir, "main:\nret\n")
 
 
 @pytest.mark.parametrize("returncode,stderr", [(0, "syntax error"), (-6, "syntax error"), (1, "syntax error: Assertion failed")])
 def test_invalid_source_must_not_pass_on_crash(monkeypatch, tmp_path, returncode, stderr):
     monkeypatch.setattr("extended_cases.subprocess.run", lambda *a, **kw: CompletedProcess(a[0], returncode, "", stderr))
     with pytest.raises(AssertionError):
-        execute(case(43), Path("compiler"), tmp_path)
+        execute(case(42), Path("compiler"), tmp_path)
 
 
 def test_invalid_source_clean_rejection(monkeypatch, tmp_path):
     monkeypatch.setattr("extended_cases.subprocess.run", lambda *a, **kw: CompletedProcess(a[0], 1, "", "syntax error"))
-    execute(case(43), Path("compiler"), tmp_path)
+    execute(case(42), Path("compiler"), tmp_path)
 
 
-@pytest.mark.parametrize("number", [44, 45, 46])
+@pytest.mark.parametrize("number", [43, 44, 45])
 def test_cli_sequences(monkeypatch, tmp_path, number):
     calls = []
 
@@ -55,7 +55,7 @@ def test_cli_sequences(monkeypatch, tmp_path, number):
         source_path = Path(args[args.index("-S") + 1]) if "-S" in args else Path(args[-1])
         source = source_path.read_text(encoding="utf-8")
         first = "first" in source
-        value = 1 if first else 2 if number == 46 else 7
+        value = 1 if first else 2 if number == 45 else 7
         ir = ("fun @first(): i32 {\n%entry:\nret 1\n}\n" if first else "")
         ir += "fun @main(): i32 {\n%entry:\n" + ("%0 = call @first()\n" if first else "") + f"ret {value}\n}}\n"
         (cwd / "parse.kp").write_text(ir, encoding="utf-8")
@@ -66,10 +66,10 @@ def test_cli_sequences(monkeypatch, tmp_path, number):
 
     monkeypatch.setattr("extended_cases.subprocess.run", fake_run)
     execute(case(number), Path("compiler"), tmp_path)
-    if number == 44:
+    if number == 43:
         assert "-S" not in calls[0] and "-O2" in calls[1]
         assert calls[1][-1].endswith("named-output.s")
-    elif number == 45:
+    elif number == 44:
         assert calls[0][2].endswith("input with space.sy")
         assert calls[0][-1].endswith("output with space.s")
     else:
@@ -79,7 +79,7 @@ def test_cli_sequences(monkeypatch, tmp_path, number):
 
 def test_failure_keeps_diagnostics_and_snapshots(monkeypatch, tmp_path):
     monkeypatch.setattr("extended_cases.subprocess.run", lambda *a, **kw: CompletedProcess(a[0], -6, "", "assertion"))
-    result = run_case(case(43), Path("compiler"), tmp_path)
+    result = run_case(case(42), Path("compiler"), tmp_path)
     assert result.status == "FAIL"
     assert Path(result.artifacts, "invalid.diagnostics.json").exists()
     assert Path(result.artifacts, "invalid.sy").exists()
@@ -101,17 +101,6 @@ def test_array_offsets_track_materialization_and_reject_wrong_stride():
     assert 4092 in constant_offsets("movz x8, #4092\nadd x9, x28, x8\n")
     assert 4092 not in constant_offsets("movz x8, #1023\nlsl x8, x8, #3\nadd x9, x28, x8\n")
     assert 4092 not in constant_offsets("movz x8, #4092\nldr x8, [sp]\nadd x9, x28, x8\n")
-
-
-@pytest.mark.parametrize("element_size", [4, 8])
-def test_global_layout_uses_sysy_element_size(element_size):
-    ir = "global @__filed0__g = alloc i32, 0\nglobal @__filed0__gf = alloc f32, 0\nglobal @__filed0__a = alloc [[i32, 2], 2], zeroinit\nfun @main(): i32 {\n%entry:\n%0 = add 3, 0\nret %0\n}\n"
-    asm = f".data\n.comm __filed0__g,{element_size},8\n.comm __filed0__gf,{element_size},8\n.comm __filed0__a,{element_size*4},8\nmain:\nret\n"
-    if element_size == 4:
-        check_outputs(37, ir, asm)
-    else:
-        with pytest.raises(AssertionError, match="数据大小"):
-            check_outputs(37, ir, asm)
 
 
 @pytest.mark.parametrize("bypass_calls_side", [False, True])

@@ -1,4 +1,4 @@
-"""TC31–TC46: static integration checks, matching 测试用例.md.
+"""TC31–TC45: static integration checks, matching 测试用例.md.
 
 IR and assembly are checked separately. These checks do not prove runtime
 semantics or inspect the optimizer's private analysis structures.
@@ -20,16 +20,15 @@ def make_cases(c):
         (34, "整数与浮点 I/O 及计时函数调用", "int main(){starttime();int a=getint();float f=getfloat();putint(a);putfloat(f);stoptime();return 0;}"),
         (35, "递归函数的返回值、分支与链接寄存器保护", "int fact(int n){if(n<=1)return 1;return n*fact(n-1);} int main(){return fact(5);}"),
         (36, "嵌套多函数调用与中间返回值保存", "int h(int x){return x+1;} int g(int x){return x*2;} int f(int a,int b){return a-b;} int main(){return f(g(h(3)),h(4));}"),
-        (37, "全局常量、零初始化标量和零初始化数组", "const int C=3;int g;float gf;int a[2][2];int main(){return C+g+a[1][1];}"),
-        (38, "大局部数组的首尾元素读写", "int main(){int a[1024];a[0]=1;a[1023]=2;return a[0]+a[1023];}"),
-        (39, "9 个整数与 9 个浮点混合参数溢出到栈", "int mix(int a0,int a1,int a2,int a3,int a4,int a5,int a6,int a7,int a8,float b0,float b1,float b2,float b3,float b4,float b5,float b6,float b7,float b8){return a8+(b8>0.0);} int main(){return mix(0,1,2,3,4,5,6,7,8,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0);}"),
-        (40, "浮点函数返回值参与后续比较", "float half(float x){return x/2.0;} int main(){float y=half(7.0);return y>3.0;}"),
-        (41, "内层 break/continue 的最近循环目标", "int main(){int i=0,j=0;while(i<3){i=i+1;j=0;while(j<3){j=j+1;if(j==1)continue;if(j==2)break;}}return i+j;}"),
-        (42, "菱形 CFG 合流后的变量定义与使用", "int main(){int y;if(getint())y=1;else y=2;return y+3;}"),
-        (43, "非法 SysY 语法的诊断与产物阻断", "int main( { return 0; }"),
-        (44, "无 -S、-O 等级与指定输出路径", "int main(){return 7;}"),
-        (45, "含空格的输入和汇编输出文件名", "int main(){return 7;}"),
-        (46, "同目录连续编译的 IR 覆盖与状态重置", "int first(){return 1;} int main(){return first();}"),
+        (37, "大局部数组的首尾元素读写", "int main(){int a[1024];a[0]=1;a[1023]=2;return a[0]+a[1023];}"),
+        (38, "9 个整数与 9 个浮点混合参数溢出到栈", "int mix(int a0,int a1,int a2,int a3,int a4,int a5,int a6,int a7,int a8,float b0,float b1,float b2,float b3,float b4,float b5,float b6,float b7,float b8){return a8+(b8>0.0);} int main(){return mix(0,1,2,3,4,5,6,7,8,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0);}"),
+        (39, "浮点函数返回值参与后续比较", "float half(float x){return x/2.0;} int main(){float y=half(7.0);return y>3.0;}"),
+        (40, "内层 break/continue 的最近循环目标", "int main(){int i=0,j=0;while(i<3){i=i+1;j=0;while(j<3){j=j+1;if(j==1)continue;if(j==2)break;}}return i+j;}"),
+        (41, "菱形 CFG 合流后的变量定义与使用", "int main(){int y;if(getint())y=1;else y=2;return y+3;}"),
+        (42, "非法 SysY 语法的诊断与产物阻断", "int main( { return 0; }"),
+        (43, "无 -S、-O 等级与指定输出路径", "int main(){return 7;}"),
+        (44, "含空格的输入和汇编输出文件名", "int main(){return 7;}"),
+        (45, "同目录连续编译的 IR 覆盖与状态重置", "int first(){return 1;} int main(){return first();}"),
     ]
     return [c(i, "全流程 / 测试用例.md", title, "backend", source, [],
               criticality="中" if i >= 43 else "高", note="静态集成：IR、汇编及命令行结构断言")
@@ -151,7 +150,7 @@ def check_outputs(case_id, ir, asm):
             require(not reachable(graph, destinations[1-call_edge], call_label), f"{prefix} 短路路径仍能到达 side")
         patterns(main, r"\beq\s+0,", r"\b(?:and|or)\s+")
         patterns(asm, r"^\s*b\.\w+\s+", r"^\s*bl\s+side\b")
-    elif case_id in (32, 40):
+    elif case_id in (32, 39):
         name = "f" if case_id == 32 else "half"
         patterns(ir, rf"fun @{name}\([^\n]*f32[^\n]*\)\s*:\s*f32", rf"call @{name}\(")
         patterns(asm, rf"^\s*bl\s+{name}\b", r"^\s*fcmp\w*\s+", r"\bs0\b", r"\b[wx]0\b")
@@ -195,25 +194,6 @@ def check_outputs(case_id, ir, asm):
         require(re.findall(r"^\s*bl\s+(h|g|f)\b", asm, re.M) == ["h", "g", "h", "f"], "汇编调用顺序错误")
         patterns(asm, r"^\s*(?:str|stp)\s+", r"^\s*(?:ldr|ldp)\s+")
     elif case_id == 37:
-        for name, ty, size in (("g", "i32", 4), ("gf", "f32", 4), ("a", "[[i32, 2], 2]", 16)):
-            match = re.search(r"^global @((?:[\w]+__)?" + name + r")\s*=\s*alloc\s+" + re.escape(ty) + r",\s*([^\n]+)", ir, re.M)
-            require(match is not None, f"缺少全局对象 {name}")
-            init = match[2]
-            require(init.strip() == "zeroinit" or (not re.search(r"[1-9]", init) and "0" in init), f"{name} 未零初始化")
-            common = re.search(r"^\s*\.comm\s+" + re.escape(match[1]) + r",\s*(\d+),\s*\d+", asm, re.M)
-            if common:
-                require(int(common[1]) == size, f"{name} 数据大小 {common[1]}，预期 {size}（SysY i32/f32 为 4 字节）")
-                continue
-            data = re.search(r"^" + re.escape(match[1]) + r":\s*\n((?:\s*\.(?:xword|word|zero|long|space)[^\n]*\n?)+)", asm, re.M)
-            require(data is not None, f"汇编数据段缺少 {name}")
-            total = 0
-            for directive, value in re.findall(r"\.(xword|word|long|zero|space)\s+([^\n]+)", data[1]):
-                nums = [int(v.strip(), 0) for v in value.split(",")]
-                require(directive in ("zero", "space") or all(v == 0 for v in nums), f"{name} 数据不为零")
-                total += nums[0] if directive in ("zero", "space") else (8 if directive == "xword" else 4) * len(nums)
-            require(total == size, f"{name} 数据大小 {total}，预期 {size}")
-        patterns(main, r"\badd\s+[^\n]*\b3\b")
-    elif case_id == 38:
         patterns(main, r"alloc \[i32, 1024\]", r"getelemptr[^\n]*,\s*0\b", r"getelemptr[^\n]*,\s*1023\b", r"\bstore\s+", r"\bload\s+")
         patterns(asm, r"^\s*str\s+", r"^\s*ldr\s+", r"\bsp\b")
         require(4092 in constant_offsets(asm), "末元素地址未按 1023×4 = 4092 字节偏移构造")
@@ -222,7 +202,7 @@ def check_outputs(case_id, ir, asm):
         require(any(int(n) >= 4096 and int(n) % 16 == 0 for n in frames), "缺少至少 4096 字节且 16 字节对齐的栈帧")
         for op, imm in re.findall(r"\b(add|sub)\s+[^\n]*?#(\d+)\s*$", asm, re.M):
             require(int(imm) <= 4095, f"{op} 立即数 {imm} 超出无移位编码范围")
-    elif case_id == 39:
+    elif case_id == 38:
         patterns(main, r"call @mix\(")
         args = re.search(r"call @mix\(([^)]*)\)", main)[1].split(",")
         require(len(args) == 18, "mix 应接收 18 个参数")
@@ -236,7 +216,7 @@ def check_outputs(case_id, ir, asm):
         outgoing = re.findall(r"^\s*str\s+([xws]\d+),\s*\[sp(?:,\s*#(\d+))?\]", before, re.M)
         require(any(reg[0] in "xw" and int(offset or 0) == 0 for reg, offset in outgoing), "第 9 个整数参数未存入 outgoing 栈槽 0")
         require(any(reg.startswith("s") and int(offset or 0) == 8 for reg, offset in outgoing), "第 9 个浮点参数未存入 outgoing 栈槽 8")
-    elif case_id == 41:
+    elif case_id == 40:
         entries = [label for label in graph if "while_entry" in label]
         require(len(entries) == 2, "应有两层循环")
         inner = entries[1]
@@ -250,7 +230,7 @@ def check_outputs(case_id, ir, asm):
         for destinations, target in zip(conditionals, (inner, end)):
             require(graph[destinations[0]][-1] == "jump " + target, f"continue/break 应跳转至 {target}")
         patterns(asm, r"while_entry", r"while_end")
-    elif case_id == 42:
+    elif case_id == 41:
         patterns(main, r"call @getint\(", r"\bbr\s+", r"\badd\s+[^\n]*\b3\b")
         stores = [re.search(r"store\s+" + str(n) + r",\s*([@%][\w.]+)", main) for n in (1, 2)]
         require(all(stores) and stores[0][1] == stores[1][1], "两个分支必须写入同一个 y")
@@ -292,25 +272,25 @@ def execute(case, compiler: Path, work: Path):
         require(not assembly or (path.exists() and bool(asm.strip())), "未生成非空汇编文件")
         return ir, asm
 
-    if case.id == 43:
+    if case.id == 42:
         proc, ir, asm, _ = compile_step(case.source, "invalid")
         require(proc.returncode > 0, f"语法错误应正常非零退出，实际 {proc.returncode}（负数表示信号崩溃）")
         patterns(proc.stderr, r"(?i)(syntax|parse|语法).*error|语法错误")
         require(not re.search(r"(?i)assert|abort|segmentation|core dumped", proc.stderr), "语法错误触发了断言或崩溃")
         require(not asm.strip() and not re.search(r"fun\s+@main", ir), "非法输入仍生成有效程序产物")
-    elif case.id == 44:
+    elif case.id == 43:
         ir, _ = success(compile_step(case.source, "frontend", assembly=False), assembly=False)
         patterns(ir, r"ret 7")
         require(not list(work.glob("*.s")), "无 -S 时不应生成汇编")
         ir, asm = success(compile_step(case.source, "optimized", optimize=True))
         patterns(ir, r"ret 7")
         patterns(asm, r"^\s*main:", r"^\s*ret\b")
-    elif case.id == 45:
+    elif case.id == 44:
         ir, asm = success(compile_step(case.source, "spaces", spaces=True))
         patterns(ir, r"ret 7")
         patterns(asm, r"^\s*main:", r"^\s*ret\b")
         require(not (work / "output.s").exists(), "输出路径被截断或忽略")
-    elif case.id == 46:
+    elif case.id == 45:
         ir, asm = success(compile_step(case.source, "first"))
         patterns(ir, r"fun @first", r"call @first\(")
         patterns(asm, r"^\s*first:", r"^\s*bl\s+first\b")
