@@ -196,7 +196,7 @@ def check_outputs(case_id, ir, asm):
         patterns(asm, r"^\s*(?:str|stp)\s+", r"^\s*(?:ldr|ldp)\s+")
     elif case_id == 37:
         for name, ty, size in (("g", "i32", 4), ("gf", "f32", 4), ("a", "[[i32, 2], 2]", 16)):
-            match = re.search(r"^global @((?:__filed\d+__)?" + name + r")\s*=\s*alloc\s+" + re.escape(ty) + r",\s*([^\n]+)", ir, re.M)
+            match = re.search(r"^global @((?:[\w]+__)?" + name + r")\s*=\s*alloc\s+" + re.escape(ty) + r",\s*([^\n]+)", ir, re.M)
             require(match is not None, f"缺少全局对象 {name}")
             init = match[2]
             require(init.strip() == "zeroinit" or (not re.search(r"[1-9]", init) and "0" in init), f"{name} 未零初始化")
